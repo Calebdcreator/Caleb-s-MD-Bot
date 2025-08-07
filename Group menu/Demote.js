@@ -1,0 +1,17 @@
+async function handleDemote(sock, msg, body) {
+  const from = msg.key.remoteJid
+  const groupMeta = await sock.groupMetadata(from)
+  const sender = msg.key.participant || msg.key.remoteJid
+  const isAdmin = groupMeta.participants.find(p => p.id === sender)?.admin
+  const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid
+
+  if (body.startsWith('.demote')) {
+    if (!isAdmin) return await sock.sendMessage(from, { text: '❌ Only admins can demote.' }, { quoted: msg })
+    if (!mentioned) return await sock.sendMessage(from, { text: '⚠️ Mention a user to demote.' }, { quoted: msg })
+
+    await sock.groupParticipantsUpdate(from, mentioned, 'demote')
+    await sock.sendMessage(from, { text: `⬇️ Demoted: @${mentioned[0].split('@')[0]}`, mentions: mentioned }, { quoted: msg })
+  }
+}
+
+export default handleDemote
